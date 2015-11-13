@@ -99,9 +99,10 @@ def slice_time_file(fname, slice_times, TR):
     """
     img = nib.load(fname)
     interp_img = slice_time_image(img, slice_times, TR)
-    # Hint: use os.path.split and os.path.join to make the new filename
+    
     path, tail = os.path.split(fname)
-    new_tail = 'Interp_' + tail
+    new_tail = 'Interp_' + tail  # I decided to use a different new filename
+    # I thought it would provide more information than just adding 'a'
     new_fname = os.path.join(path,new_tail)
     nib.save(interp_img, new_fname)
 
@@ -113,24 +114,31 @@ def main():
     fname = sys.argv[1]
     # Assume the TR
     TR = 2.0
+    
     # Assume the slices were acquired even slices first, inferior to
     # superior, then odd slices, inferior to superior, where the most inferior
     # slice is index 0 and 0 is an even number.  What are the slice acquisition
     # times in seconds, where the first value is the acquisition time of slice
     # 0, the second is acquisition time of slice 1, etc?
+    
+    # have to load in image to know the number of slices there are
     img = nib.load(fname)
-    # Get the data array from the image
-    data = img.get_data()
-    # Need to know how many slices there are in the image
-    num_slices = data.shape[2]
+    num_slices = img.shape[2]
     print "Number of slices: %s" % num_slices
+    
+    # use ceil in the next two lines in case of an odd number of slices
     first_half = np.arange(0, np.ceil(num_slices/2.))
     second_half = np.arange(np.ceil(num_slices/2.), num_slices)
     slice_times = np.array([])
+    
     for i in first_half:
         slice_times = np.append(slice_times,first_half[i])
         if i < len(second_half):
+            # if there are an odd number of slices
+            # len(second_half)<len(first_half)
+            # so we have to make sure that there are more slices to append
             slice_times = np.append(slice_times,second_half[i])
+
     print "Slice Ordering: %s" % slice_times
     slice_time_file(fname, slice_times, TR)
 
